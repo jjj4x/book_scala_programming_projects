@@ -1,10 +1,11 @@
 package retcalc
 
 import org.scalactic.{Equality, TolerantNumerics, TypeCheckedTripleEquals}
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{EitherValues, Matchers, WordSpec}
 
 
-class RetCalcSpec extends WordSpec with Matchers with TypeCheckedTripleEquals {
+class RetCalcSpec extends WordSpec
+with Matchers with TypeCheckedTripleEquals with EitherValues {
   implicit val doubleEquality: Equality[Double] = TolerantNumerics.tolerantDoubleEquality(0.001)
 
   val params: RetCalcParams = RetCalcParams(
@@ -23,7 +24,7 @@ class RetCalcSpec extends WordSpec with Matchers with TypeCheckedTripleEquals {
         netIncome = 3000,
         currentExpenses = 2000,
         initialCapital = 10000,
-      )
+      ).right.value
       val expected = 541267.1990
 
       actual should === (expected)
@@ -37,7 +38,7 @@ class RetCalcSpec extends WordSpec with Matchers with TypeCheckedTripleEquals {
       netIncome = 0,
       currentExpenses = 2000,
       initialCapital = 541267.198962
-    )
+    ).right.value
 
     val expected = 309867.53176
 
@@ -50,7 +51,7 @@ class RetCalcSpec extends WordSpec with Matchers with TypeCheckedTripleEquals {
         FixedReturns(0.04),
         params,
         25 * 12,
-      )
+      ).right.value
 
       capitalAtRetirement should === (541267.1990)
       capitalAfterDeath should === (309867.5316)
@@ -68,7 +69,7 @@ class RetCalcSpec extends WordSpec with Matchers with TypeCheckedTripleEquals {
         )
       )
       val (capitalAtRetirement, capitalAfterDeath) =
-        RetCalc.simulatePlan(returns, params, nOfMonthsSavings)
+        RetCalc.simulatePlan(returns, params, nOfMonthsSavings).right.value
 
       capitalAtRetirement should ===(541267.1990)
       capitalAfterDeath should ===(-57737.7227)
@@ -80,7 +81,7 @@ class RetCalcSpec extends WordSpec with Matchers with TypeCheckedTripleEquals {
       val actual = RetCalc.nOfMonthsSaving(
         FixedReturns(0.04),
         params,
-      )
+      ).right.value
       val expected = 23 * 12 + 1
       actual should === (expected)
     }
@@ -94,7 +95,7 @@ class RetCalcSpec extends WordSpec with Matchers with TypeCheckedTripleEquals {
           currentExpenses = 2999,
           initialCapital = 0,
         ),
-      )
+      ).right.value
       val expected = 8280
       actual should === (expected)
     }
@@ -103,10 +104,10 @@ class RetCalcSpec extends WordSpec with Matchers with TypeCheckedTripleEquals {
       val actual = RetCalc.nOfMonthsSaving(
         FixedReturns(0.04),
         params.copy(netIncome = 1000),
-      )
+      ).left.value
 
       // This is not very pretty, but we will see in the next chapter how we can model this better with Option or Either.
-      actual should === (Int.MaxValue)
+      actual should === (RetCalcError.MoreExpensesThanIncome(1000, 2000))
     }
   }
 
